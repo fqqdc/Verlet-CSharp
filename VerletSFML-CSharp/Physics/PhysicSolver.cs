@@ -19,6 +19,8 @@ namespace VerletSFML_CSharp.Physics
         Vector2 gravity = new(0, 20);
         int sub_steps;
 
+        int threadCount = Environment.ProcessorCount;
+
         public int ObjectsCount { get => objects.Count; }
         public PhysicObject this[int index] { get => objects[index]; }
 
@@ -85,7 +87,7 @@ namespace VerletSFML_CSharp.Physics
 
             int end = (i + 1) * sliceSize;
             end = Math.Min(end, grid.Size);
-            
+
             for (int idx = start; idx < end; ++idx)
             {
                 ProcessCell(grid[idx], idx);
@@ -96,7 +98,7 @@ namespace VerletSFML_CSharp.Physics
         private void SolveCollisionsParallel()
         {
             // Multi-thread grid
-            int threadCount = Environment.ProcessorCount;
+            int threadCount = Environment.ProcessorCount * 3;
 
             int sliceCount = threadCount * 2;
             int sliceSize = (grid.Width / sliceCount + 1) * grid.Height;
@@ -112,6 +114,11 @@ namespace VerletSFML_CSharp.Physics
             {
                 SolveCollisionThreaded(2 * i + 1, sliceSize);
             });
+        }
+
+        private void SolveCollisionsMulti()
+        {
+            throw new NotImplementedException();
         }
 
         private void SolveCollisions()
@@ -147,7 +154,8 @@ namespace VerletSFML_CSharp.Physics
                 //SolveCollisions();
                 SolveCollisionsParallel();
                 //UpdateObjects(sub_dt);
-                UpdateObjectsParallel(sub_dt);                
+                UpdateObjectsParallel(sub_dt);
+                //UpdateObjectsMulti(sub_dt);
             }
         }
 
@@ -169,15 +177,12 @@ namespace VerletSFML_CSharp.Physics
 
         private void UpdateObjectsParallel(float dt)
         {
-            var rangeSize = objects.Count / Environment.ProcessorCount;
-            if (rangeSize == 0) return;
+            if (objects.Count == 0) return;
 
-            var partitioner = Partitioner.Create(0, objects.Count, rangeSize);
-
+            var partitioner = Partitioner.Create(0, objects.Count, objects.Count / threadCount + 1);
 
             Parallel.ForEach(partitioner, range =>
             {
-
                 for (int i = range.Item1; i < range.Item2; ++i)
                 {
                     PhysicObject obj = objects[i];
@@ -205,6 +210,54 @@ namespace VerletSFML_CSharp.Physics
                     }
                 }
             });
+        }
+
+        private void UpdateObjectsMulti(float dt)
+        {
+            int sliceSize = objects.Count / threadCount;
+
+            for (int idThread = 0; idThread <= threadCount; ++idThread)
+            {
+                int index = idThread;
+                int start = index * sliceSize;
+                int end = (index + 1) * sliceSize;
+
+                if (index == threadCount)
+                {
+                    if (start < objects.Count) end = objects.Count;
+                    else continue;
+                }
+
+                ThreadPool.QueueUserWorkItem(o =>
+                {
+                    for (int i = start; i < end; i++)
+                    {
+                        PhysicObject obj = objects[i];
+                        // Add gravity
+                        obj.Acceleration += gravity;
+                        // Apply Verlet integration
+                        obj.Update(dt);
+                        // Apply map borders collisions
+                        const float margin = 2.0f;
+                        if (obj.Position.X > worldSize.X - margin)
+                        {
+                            obj.Position.X = worldSize.X - margin;
+                        }
+                        else if (obj.Position.X < margin)
+                        {
+                            obj.Position.X = margin;
+                        }
+                        if (obj.Position.Y > worldSize.Y - margin)
+                        {
+                            obj.Position.Y = worldSize.Y - margin;
+                        }
+                        else if (obj.Position.Y < margin)
+                        {
+                            obj.Position.Y = margin;
+                        }
+                    }
+                });
+            }
         }
 
         private void UpdateObjects(float dt)

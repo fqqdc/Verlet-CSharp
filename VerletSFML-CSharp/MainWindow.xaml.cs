@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -56,9 +57,8 @@ namespace VerletSFML_CSharp
 
         Task? mainTask;
         Stopwatch swSolver = new();
-        Stopwatch swUI = new();
 
-        public async void MainLoop()
+        public void MainLoop()
         {
             float dt = 1.0f / fpsCap;
 
@@ -78,61 +78,34 @@ namespace VerletSFML_CSharp
                 solver.Update(dt);
                 swSolver.Stop();
 
-                emit = solver.ObjectsCount < 100 ||
-                    swSolver.Elapsed < TimeSpan.FromSeconds(dt)*2;
-
-                swUI.Restart();
                 Dispatcher.Invoke(UpdateUI);
-                swUI.Stop();
                 Dispatcher.Invoke(UpdateTitle);
 
-                var waitTime = dt - swSolver.Elapsed.TotalSeconds - swUI.Elapsed.TotalSeconds;
+                var waitTime = dt - swSolver.Elapsed.TotalSeconds;
                 if (waitTime > 0)
-                {
-                    await Task.Delay(TimeSpan.FromSeconds(waitTime));
-                }
+                    Thread.Sleep(TimeSpan.FromSeconds(waitTime));
             }
         }
-
-        Dictionary<int, UIElement> ObjectsUI = new();
-        Dictionary<int, Vector2> ObjectsPos = new();
-        float sizeRatio = 2;
 
         public void UpdateUI()
         {
             renderCanvas.InvalidateVisual();
         }
-        public void UpdateUIByUIElement()
-        {
-            for (int id = 0; id < solver.ObjectsCount; id++)
-            {
-                if (!ObjectsUI.ContainsKey(id))
-                {
-                    var renderObject = new Ellipse
-                    {
-                        Fill = new SolidColorBrush { Color = solver[id].Color },
-                        Width = sizeRatio * 2,
-                        Height = sizeRatio * 2,
-                    };
-                    ObjectsUI.Add(id, renderObject);
-                    ObjectsPos.Add(id, solver[id].Position);
 
-                    renderCanvas.Children.Add(renderObject);
-                    Canvas.SetLeft(ObjectsUI[id], solver[id].Position.X * sizeRatio);
-                    Canvas.SetTop(ObjectsUI[id], solver[id].Position.Y * sizeRatio);
-                }
-
-                if (Vector2.DistanceSquared(ObjectsPos[id], solver[id].Position) > 1e-2)
-                {
-                    Canvas.SetLeft(ObjectsUI[id], solver[id].Position.X * sizeRatio);
-                    Canvas.SetTop(ObjectsUI[id], solver[id].Position.Y * sizeRatio);
-                }
-            }
-        }
-
+        TimeSpan maxSolver = TimeSpan.Zero;
+        TimeSpan maxRender = TimeSpan.Zero;
         public void UpdateTitle()
         {
-            Title = $"{solver.ObjectsCount} Solver:{(int)swSolver.Elapsed.TotalMicroseconds:10}us UI:{(int)swUI.Elapsed.TotalMicroseconds:10}us";
+            var tsSolver = swSolver.Elapsed;
+            if (tsSolver > maxSolver) maxSolver = tsSolver;
+            var tsRender = renderCanvas.TimeSpanRender;
+            if (tsRender > maxRender) maxRender = tsRender;
+
+            StringBuilder sbTitle = new();
+            sbTitle.Append($"{solver.ObjectsCount,10}");
+            sbTitle.Append($" | Solver:{(int)tsSolver.TotalMicroseconds,10}us({(int)maxSolver.TotalMicroseconds,10}us)");
+            sbTitle.Append($" | UI:{(int)tsRender.TotalMicroseconds,10}us({(int)maxRender.TotalMicroseconds,10}us)");
+            Title = sbTitle.ToString();
         }
     }
 }
