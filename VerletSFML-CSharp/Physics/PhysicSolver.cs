@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Controls;
 using VerletSFML_CSharp.Engine.Common;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace VerletSFML_CSharp.Physics
 {
@@ -63,17 +64,19 @@ namespace VerletSFML_CSharp.Physics
 
         private void CheckAtomCellCollisions(int atom_idx, ref CollisionCell c)
         {
+            var cObjects = Ints4.CreateSpan(ref c.Objects);
             for (int i = 0; i < c.ObjectsCount; ++i)
             {
-                SolveContact(atom_idx, c.Objects.Item(i));
+                SolveContact(atom_idx, cObjects[i]);
             }
         }
 
         void ProcessCell(ref CollisionCell c, int index)
         {
+            var cObjects = Ints4.CreateSpan(ref c.Objects);
             for (int i = 0; i < c.ObjectsCount; ++i)
             {
-                int atom_idx = c.Objects.Item(i);
+                int atom_idx = cObjects[i];
                 CheckAtomCellCollisions(atom_idx, ref grid[index - 1]);
                 CheckAtomCellCollisions(atom_idx, ref grid[index]);
                 CheckAtomCellCollisions(atom_idx, ref grid[index + 1]);

@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
-using System.Windows.Media;
 
 namespace VerletSFML_CSharp.Engine.Common
 {
@@ -12,7 +12,8 @@ namespace VerletSFML_CSharp.Engine.Common
     {
         public static Color CreateColor(Vector3 vec)
         {
-            return Color.FromRgb((byte)vec.X, (byte)vec.Y, (byte)vec.Z);
+            //return Color.FromRgb((byte)vec.X, (byte)vec.Y, (byte)vec.Z);
+            return Color.FromArgb((int)vec.X, (int)vec.Y, (int)vec.Z);
         }
 
         public static Color GetRainbow(float t)

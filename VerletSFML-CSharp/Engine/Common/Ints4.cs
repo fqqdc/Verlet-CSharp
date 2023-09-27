@@ -20,6 +20,12 @@ namespace VerletSFML_CSharp.Engine.Common
             var spanInts4 = new Span<Ints4>(ref ints4);
             return ref MemoryMarshal.Cast<Ints4, int>(spanInts4)[index];
         }
+
+        public static Span<int> CreateSpan(ref Ints4 ints4)
+        {
+            var spanInts4 = new Span<Ints4>(ref ints4);
+            return MemoryMarshal.Cast<Ints4, int>(spanInts4);
+        }
     }
 
     public static class Ints4Helper

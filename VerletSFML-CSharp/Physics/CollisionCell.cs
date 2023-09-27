@@ -29,12 +29,13 @@ namespace VerletSFML_CSharp.Physics
 
         public void Remove(int id)
         {
+            var objects = Ints4.CreateSpan(ref Objects);
             for (int i = 0; i < ObjectsCount; ++i)
             {
-                if (Objects.Item(i) == id)
+                if (objects[i] == id)
                 {
                     // Swap pop
-                    Objects.Item(i) = Objects.Item(ObjectsCount - 1);
+                    objects[i] = objects[ObjectsCount - 1];
                     --ObjectsCount;
                     return;
                 }

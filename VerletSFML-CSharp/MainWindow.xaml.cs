@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Numerics;
@@ -40,7 +42,11 @@ namespace VerletSFML_CSharp
             worldSize = new(300, 300);
             solver = new(worldSize);
             //renderCanvas.PhysicSolver = solver;
-            RenderImage.Source = bitmap;
+
+            wb = new WriteableBitmap(300 * RATIO, 300 * RATIO, 96, 96, PixelFormats.Pbgra32, null);
+            backBitmap = new Bitmap(300 * RATIO, 300 * RATIO, wb.BackBufferStride, System.Drawing.Imaging.PixelFormat.Format32bppArgb, wb.BackBuffer);
+            RenderImage.Source = wb;
+
             mainTask = Task.Run(MainLoop);
         }
 
@@ -87,7 +93,7 @@ namespace VerletSFML_CSharp
                 solver.Update(dt);
                 swSolver.Stop();
 
-                Dispatcher.Invoke(UpdateUI_RenderImage);
+                Dispatcher.Invoke(UpdateUI_RenderImage_2);
                 Dispatcher.Invoke(UpdateTitle);
 
                 var waitTime = dt - swSolver.Elapsed.TotalSeconds;
@@ -102,24 +108,47 @@ namespace VerletSFML_CSharp
         }
 
 
-        const int RATIO = 3;
-        RenderTargetBitmap bitmap = new RenderTargetBitmap(
-                300 * RATIO, 300 * RATIO, 72, 72, PixelFormats.Default);
+        const int RATIO = 6;
+        //RenderTargetBitmap bitmap = new RenderTargetBitmap(
+        //        300 * RATIO, 300 * RATIO, 72, 72, PixelFormats.Default);
 
-        public void UpdateUI_RenderImage()
+        //public void UpdateUI_RenderImage()
+        //{
+        //    swRender.Restart();
+        //    DrawingVisual drawingVisual = new DrawingVisual();
+        //    using (DrawingContext dc = drawingVisual.RenderOpen())
+        //    {
+        //        dc.DrawRectangle(System.Windows.Media.Brushes.White, null, new(0, 0, 300 * RATIO, 300 * RATIO));
+        //        for (int i = 0; i < solver.ObjectsCount; i++)
+        //        {
+        //            ref var obj = ref solver[i];
+        //            dc.DrawEllipse(new SolidColorBrush { Color = obj.Color }, null, new(obj.Position.X * RATIO, obj.Position.Y * RATIO), 1 * RATIO, 1 * RATIO);
+        //        }
+        //    }
+        //    bitmap.Render(drawingVisual);
+        //    swRender.Stop();
+        //}
+
+
+        WriteableBitmap wb;
+        Bitmap backBitmap;
+        Int32Rect wbDirtyRect = new(0, 0, 300 * RATIO, 300 * RATIO);
+        public void UpdateUI_RenderImage_2()
         {
             swRender.Restart();
-            DrawingVisual drawingVisual = new DrawingVisual();
-            using (DrawingContext dc = drawingVisual.RenderOpen())
+            wb.Lock();
+            
+            Graphics graphics = Graphics.FromImage(backBitmap);
+            graphics.Clear(System.Drawing.Color.White);
+            for (int i = 0; i < solver.ObjectsCount; i++)
             {
-                dc.DrawRectangle(Brushes.White, null, new(0, 0, 300 * RATIO, 300 * RATIO));
-                for (int i = 0; i < solver.ObjectsCount; i++)
-                {
-                    ref var obj = ref solver[i];
-                    dc.DrawEllipse(new SolidColorBrush { Color = obj.Color }, null, new(obj.Position.X * RATIO, obj.Position.Y * RATIO), 1 * RATIO, 1 * RATIO);
-                }
+                ref var obj = ref solver[i];
+                graphics.FillEllipse(new System.Drawing.SolidBrush(obj.Color),
+                    obj.Position.X * RATIO - RATIO * 0.5f, obj.Position.Y * RATIO - RATIO * 0.5f, 1 * RATIO, 1 * RATIO);
             }
-            bitmap.Render(drawingVisual);
+            wb.AddDirtyRect(wbDirtyRect);
+
+            wb.Unlock();
             swRender.Stop();
         }
 
