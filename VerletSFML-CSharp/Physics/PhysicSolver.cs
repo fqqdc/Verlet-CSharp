@@ -24,6 +24,9 @@ namespace VerletSFML_CSharp.Physics
         public int ObjectsCount { get => objects.Count; }
         public PhysicObject this[int index] { get => objects[index]; }
 
+        public int Width { get => (int)worldSize.X; }
+        public int Height { get => (int)worldSize.Y; }
+
         public PhysicSolver(Vector2 size)
         {
             grid = new((int)size.X, (int)size.Y);
