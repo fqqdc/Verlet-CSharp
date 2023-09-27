@@ -58,6 +58,11 @@ namespace VerletSFML_CSharp.Physics
             lastPosition -= v;
         }
 
+        public void SetVelocity(Vector2 v)
+        {
+            lastPosition = position - v;
+        }
+
         public void SetPositionSameSpeed(Vector2 newPosition)
         {
             Vector2 toLast = lastPosition - position;

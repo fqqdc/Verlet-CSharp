@@ -73,10 +73,14 @@ namespace VerletSFML_CSharp
                 swSolver.Restart();
                 if (solver.ObjectsCount < 80000 && emit)
                 {
-                    for (int i = 20; i > 0; i--)
+                    for (int i = 10; i > 0; i--)
                     {
                         var id = solver.CreateObject(new(2.0f, 10.0f + 1.1f * i));
                         solver[id].AddVelocity(Vector2.UnitX * 0.2f);
+                        solver[id].Color = ColorUtils.GetRainbow(id * 0.0001f);
+
+                        id = solver.CreateObject(new(298.0f, 10.0f + 1.1f * i));
+                        solver[id].AddVelocity(Vector2.UnitX * -0.2f);
                         solver[id].Color = ColorUtils.GetRainbow(id * 0.0001f);
                     }
                 }

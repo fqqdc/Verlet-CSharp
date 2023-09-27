@@ -119,11 +119,6 @@ namespace VerletSFML_CSharp.Physics
             });
         }
 
-        private void SolveCollisionsMulti()
-        {
-            throw new NotImplementedException();
-        }
-
         private void SolveCollisions()
         {
             for (int i = 0; i < grid.Width; i++)
@@ -195,72 +190,38 @@ namespace VerletSFML_CSharp.Physics
                     obj.Update(dt);
                     // Apply map borders collisions
                     const float margin = 2.0f;
+
+                    var vel = obj.Velocity;
                     if (obj.Position.X > worldSize.X - margin)
                     {
                         obj.Position.X = worldSize.X - margin;
+
+                        vel.X *= -1;
+                        obj.SetVelocity(vel);
                     }
                     else if (obj.Position.X < margin)
                     {
                         obj.Position.X = margin;
+
+                        vel.X *= -1;
+                        obj.SetVelocity(vel);
                     }
                     if (obj.Position.Y > worldSize.Y - margin)
                     {
                         obj.Position.Y = worldSize.Y - margin;
+
+                        vel.Y *= -1;
+                        obj.SetVelocity(vel);
                     }
                     else if (obj.Position.Y < margin)
                     {
                         obj.Position.Y = margin;
+
+                        vel.Y *= -1;
+                        obj.SetVelocity(vel);
                     }
                 }
             });
-        }
-
-        private void UpdateObjectsMulti(float dt)
-        {
-            int sliceSize = objects.Count / threadCount;
-
-            for (int idThread = 0; idThread <= threadCount; ++idThread)
-            {
-                int index = idThread;
-                int start = index * sliceSize;
-                int end = (index + 1) * sliceSize;
-
-                if (index == threadCount)
-                {
-                    if (start < objects.Count) end = objects.Count;
-                    else continue;
-                }
-
-                ThreadPool.QueueUserWorkItem(o =>
-                {
-                    for (int i = start; i < end; i++)
-                    {
-                        PhysicObject obj = objects[i];
-                        // Add gravity
-                        obj.Acceleration += gravity;
-                        // Apply Verlet integration
-                        obj.Update(dt);
-                        // Apply map borders collisions
-                        const float margin = 2.0f;
-                        if (obj.Position.X > worldSize.X - margin)
-                        {
-                            obj.Position.X = worldSize.X - margin;
-                        }
-                        else if (obj.Position.X < margin)
-                        {
-                            obj.Position.X = margin;
-                        }
-                        if (obj.Position.Y > worldSize.Y - margin)
-                        {
-                            obj.Position.Y = worldSize.Y - margin;
-                        }
-                        else if (obj.Position.Y < margin)
-                        {
-                            obj.Position.Y = margin;
-                        }
-                    }
-                });
-            }
         }
 
         private void UpdateObjects(float dt)
