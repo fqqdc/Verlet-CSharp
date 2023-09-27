@@ -25,7 +25,7 @@ namespace VerletSFML_CSharp
             swRender.Restart();
             for (int i = 0; i < PhysicSolver.ObjectsCount; i++)
             {
-                var obj = PhysicSolver[i];
+                ref var obj = ref PhysicSolver[i];
                 dc.DrawEllipse(new SolidColorBrush { Color = obj.Color }, null, new(obj.Position.X, obj.Position.Y), 1, 1);
             }
             swRender.Stop();

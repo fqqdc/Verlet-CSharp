@@ -3,29 +3,21 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using VerletSFML_CSharp.Engine.Common;
 
 namespace VerletSFML_CSharp.Physics
 {
-    public class CollisionCell
+    public struct CollisionCell
     {
         const int CellCapacity = 4;
 
-        private int[] objects;
-
-        public CollisionCell() {
-            objects = new int[CellCapacity];
-        }
+        public Ints4 Objects;
 
         public int ObjectsCount { get; private set; }
 
-        public int this[int index]
-        {
-            get => objects[index];
-        }
-
         public void AddAtom(int id)
         {
-            objects[ObjectsCount] = id;
+            Objects.Item(ObjectsCount) = id;
             if (ObjectsCount < CellCapacity - 1)
                 ObjectsCount += 1;
         }
@@ -39,10 +31,10 @@ namespace VerletSFML_CSharp.Physics
         {
             for (int i = 0; i < ObjectsCount; ++i)
             {
-                if (objects[i] == id)
+                if (Objects.Item(i) == id)
                 {
                     // Swap pop
-                    objects[i] = objects[ObjectsCount - 1];
+                    Objects.Item(i) = Objects.Item(ObjectsCount - 1);
                     --ObjectsCount;
                     return;
                 }

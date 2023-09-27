@@ -4,10 +4,12 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Controls;
+using VerletSFML_CSharp.Engine.Common;
 
 namespace VerletSFML_CSharp.Physics
 {
@@ -22,7 +24,7 @@ namespace VerletSFML_CSharp.Physics
         int threadCount = Environment.ProcessorCount;
 
         public int ObjectsCount { get => objects.Count; }
-        public PhysicObject this[int index] { get => objects[index]; }
+        public ref PhysicObject this[int index] { get => ref CollectionsMarshal.AsSpan(objects)[index]; }
 
         public int Width { get => (int)worldSize.X; }
         public int Height { get => (int)worldSize.Y; }
@@ -44,8 +46,8 @@ namespace VerletSFML_CSharp.Physics
 
             const float response_coef = 1.0f;
             const float eps = 0.0001f;
-            PhysicObject obj_1 = objects[atom_1_idx];
-            PhysicObject obj_2 = objects[atom_2_idx];
+            ref PhysicObject obj_1 = ref this[atom_1_idx];
+            ref PhysicObject obj_2 = ref this[atom_2_idx];
             Vector2 o2_o1 = obj_1.Position - obj_2.Position;
             float dist2 = o2_o1.X * o2_o1.X + o2_o1.Y * o2_o1.Y;
             if (dist2 < 1.0f && dist2 > eps)
@@ -59,28 +61,28 @@ namespace VerletSFML_CSharp.Physics
             }
         }
 
-        private void CheckAtomCellCollisions(int atom_idx, CollisionCell c)
+        private void CheckAtomCellCollisions(int atom_idx, ref CollisionCell c)
         {
             for (int i = 0; i < c.ObjectsCount; ++i)
             {
-                SolveContact(atom_idx, c[i]);
+                SolveContact(atom_idx, c.Objects.Item(i));
             }
         }
 
-        void ProcessCell(CollisionCell c, int index)
+        void ProcessCell(ref CollisionCell c, int index)
         {
             for (int i = 0; i < c.ObjectsCount; ++i)
             {
-                int atom_idx = c[i];
-                CheckAtomCellCollisions(atom_idx, grid[index - 1]);
-                CheckAtomCellCollisions(atom_idx, grid[index]);
-                CheckAtomCellCollisions(atom_idx, grid[index + 1]);
-                CheckAtomCellCollisions(atom_idx, grid[index + grid.Height - 1]);
-                CheckAtomCellCollisions(atom_idx, grid[index + grid.Height]);
-                CheckAtomCellCollisions(atom_idx, grid[index + grid.Height + 1]);
-                CheckAtomCellCollisions(atom_idx, grid[index - grid.Height - 1]);
-                CheckAtomCellCollisions(atom_idx, grid[index - grid.Height]);
-                CheckAtomCellCollisions(atom_idx, grid[index - grid.Height + 1]);
+                int atom_idx = c.Objects.Item(i);
+                CheckAtomCellCollisions(atom_idx, ref grid[index - 1]);
+                CheckAtomCellCollisions(atom_idx, ref grid[index]);
+                CheckAtomCellCollisions(atom_idx, ref grid[index + 1]);
+                CheckAtomCellCollisions(atom_idx, ref grid[index + grid.Height - 1]);
+                CheckAtomCellCollisions(atom_idx, ref grid[index + grid.Height]);
+                CheckAtomCellCollisions(atom_idx, ref grid[index + grid.Height + 1]);
+                CheckAtomCellCollisions(atom_idx, ref grid[index - grid.Height - 1]);
+                CheckAtomCellCollisions(atom_idx, ref grid[index - grid.Height]);
+                CheckAtomCellCollisions(atom_idx, ref grid[index - grid.Height + 1]);
             }
         }
 
@@ -93,7 +95,7 @@ namespace VerletSFML_CSharp.Physics
 
             for (int idx = start; idx < end; ++idx)
             {
-                ProcessCell(grid[idx], idx);
+                ProcessCell(ref grid[idx], idx);
             }
         }
 
@@ -162,8 +164,10 @@ namespace VerletSFML_CSharp.Physics
             grid.Clear();
             // Safety border to avoid adding object outside the grid
             int i = 0;
-            foreach (PhysicObject obj in objects)
+            var arrObject = CollectionsMarshal.AsSpan(objects);
+            for (int j = 0; j < arrObject.Length; j++)
             {
+                ref PhysicObject obj = ref arrObject[j];
                 if (obj.Position.X > 1.0f && obj.Position.X < worldSize.X - 1.0f &&
                     obj.Position.Y > 1.0f && obj.Position.Y < worldSize.Y - 1.0f)
                 {
@@ -183,7 +187,7 @@ namespace VerletSFML_CSharp.Physics
             {
                 for (int i = range.Item1; i < range.Item2; ++i)
                 {
-                    PhysicObject obj = objects[i];
+                    ref PhysicObject obj = ref this[i];
                     // Add gravity
                     obj.Acceleration += gravity;
                     // Apply Verlet integration
@@ -228,7 +232,7 @@ namespace VerletSFML_CSharp.Physics
         {
             for (int i = 0; i < objects.Count; ++i)
             {
-                PhysicObject obj = objects[i];
+                ref PhysicObject obj = ref this[i];
                 // Add gravity
                 obj.Acceleration += gravity;
                 // Apply Verlet integration

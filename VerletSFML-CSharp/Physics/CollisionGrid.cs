@@ -17,7 +17,7 @@ namespace VerletSFML_CSharp.Physics
         public int Height { get; init; } = 0;
         public int Size { get; init; } = 0;
 
-        public CollisionCell this[int index] { get => cells[index]; }
+        public ref CollisionCell this[int index] { get => ref cells[index]; }
 
         public CollisionGrid(int width, int height)
         {
@@ -26,8 +26,6 @@ namespace VerletSFML_CSharp.Physics
             Size = width * height;
 
             cells = new CollisionCell[width * height];
-            for (int i = 0; i < width * height; i++)
-                cells[i] = new CollisionCell();
         }
 
 

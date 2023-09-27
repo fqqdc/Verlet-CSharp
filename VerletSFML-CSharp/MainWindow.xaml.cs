@@ -32,7 +32,6 @@ namespace VerletSFML_CSharp
     {
         private Vector2 worldSize;
         private PhysicSolver solver;
-        private WriteableBitmap renderImage;
 
         public MainWindow()
         {
@@ -116,7 +115,7 @@ namespace VerletSFML_CSharp
                 dc.DrawRectangle(Brushes.White, null, new(0, 0, 300 * RATIO, 300 * RATIO));
                 for (int i = 0; i < solver.ObjectsCount; i++)
                 {
-                    var obj = solver[i];
+                    ref var obj = ref solver[i];
                     dc.DrawEllipse(new SolidColorBrush { Color = obj.Color }, null, new(obj.Position.X * RATIO, obj.Position.Y * RATIO), 1 * RATIO, 1 * RATIO);
                 }
             }
