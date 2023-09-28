@@ -9,6 +9,6 @@
     <Viewbox HorizontalAlignment="Center" VerticalAlignment="Center" >
         <!--<local:DrawingCanves x:Name="renderCanvas" Width="300" Height="300">
         </local:DrawingCanves>-->
-        <Image x:Name="RenderImage" />
+        <Image x:Name="RenderImage"  />
     </Viewbox>
 </Window>

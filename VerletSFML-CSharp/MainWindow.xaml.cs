@@ -7,6 +7,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics.Arm;
 using System.Text;
 using System.Threading;
@@ -41,11 +42,8 @@ namespace VerletSFML_CSharp
 
             worldSize = new(300, 300);
             solver = new(worldSize);
-            //renderCanvas.PhysicSolver = solver;
 
-            wb = new WriteableBitmap(300 * RATIO, 300 * RATIO, 96, 96, PixelFormats.Pbgra32, null);
-            backBitmap = new Bitmap(300 * RATIO, 300 * RATIO, wb.BackBufferStride, System.Drawing.Imaging.PixelFormat.Format32bppArgb, wb.BackBuffer);
-            RenderImage.Source = wb;
+            InitUpdateUI_RenderImage();
 
             mainTask = Task.Run(MainLoop);
         }
@@ -93,7 +91,7 @@ namespace VerletSFML_CSharp
                 solver.Update(dt);
                 swSolver.Stop();
 
-                Dispatcher.Invoke(UpdateUI_RenderImage_2);
+                Dispatcher.Invoke(UpdateUI_RenderImage);
                 Dispatcher.Invoke(UpdateTitle);
 
                 var waitTime = dt - swSolver.Elapsed.TotalSeconds;
@@ -101,17 +99,10 @@ namespace VerletSFML_CSharp
                     Thread.Sleep(TimeSpan.FromSeconds(waitTime));
             }
         }
-
-        public void UpdateUI()
-        {
-            //renderCanvas.InvalidateVisual();
-        }
-
-
         const int RATIO = 6;
+
         //RenderTargetBitmap bitmap = new RenderTargetBitmap(
         //        300 * RATIO, 300 * RATIO, 72, 72, PixelFormats.Default);
-
         //public void UpdateUI_RenderImage()
         //{
         //    swRender.Restart();
@@ -130,25 +121,63 @@ namespace VerletSFML_CSharp
         //}
 
 
-        WriteableBitmap wb;
-        Bitmap backBitmap;
-        Int32Rect wbDirtyRect = new(0, 0, 300 * RATIO, 300 * RATIO);
-        public void UpdateUI_RenderImage_2()
-        {
-            swRender.Restart();
-            wb.Lock();
-            
-            Graphics graphics = Graphics.FromImage(backBitmap);
-            graphics.Clear(System.Drawing.Color.White);
-            for (int i = 0; i < solver.ObjectsCount; i++)
-            {
-                ref var obj = ref solver[i];
-                graphics.FillEllipse(new System.Drawing.SolidBrush(obj.Color),
-                    obj.Position.X * RATIO - RATIO * 0.5f, obj.Position.Y * RATIO - RATIO * 0.5f, 1 * RATIO, 1 * RATIO);
-            }
-            wb.AddDirtyRect(wbDirtyRect);
+        //Bitmap backBitmap;
+        //public void UpdateUI_RenderImage_2()
+        //{
+        //    swRender.Restart();
+        //    wb.Lock();
 
-            wb.Unlock();
+        //    Graphics graphics = Graphics.FromImage(backBitmap);
+        //    graphics.Clear(System.Drawing.Color.White);
+        //    for (int i = 0; i < solver.ObjectsCount; i++)
+        //    {
+        //        ref var obj = ref solver[i];
+        //        graphics.FillEllipse(new System.Drawing.SolidBrush(obj.Color),
+        //            obj.Position.X * RATIO - RATIO * 0.5f, obj.Position.Y * RATIO - RATIO * 0.5f, 1 * RATIO, 1 * RATIO);
+        //    }
+        //    wb.AddDirtyRect(wbDirtyRect);
+
+        //    wb.Unlock();
+        //    swRender.Stop();
+        //}
+
+        Int32Rect wbDirtyRect = Int32Rect.Empty;
+        WriteableBitmap? writeableBitmap;
+        Pixel24[] imageData = Array.Empty<Pixel24>();
+        private void InitUpdateUI_RenderImage()
+        {
+            imageData = new Pixel24[300 * RATIO * 300 * RATIO];
+            wbDirtyRect = new(0, 0, 300 * RATIO, 300 * RATIO);
+            writeableBitmap = new WriteableBitmap(300 * RATIO, 300 * RATIO, 96, 96, PixelFormats.Bgr24, null);
+            RenderImage.Source = writeableBitmap;
+        }
+
+        private void UpdateUI_RenderImage()
+        {
+            Debug.Assert(writeableBitmap != null);
+
+            swRender.Restart();
+            writeableBitmap.Lock();
+
+            var spanPixels = new Span<Pixel24>(imageData);
+            var byteSpan = MemoryMarshal.Cast<Pixel24, byte>(spanPixels);
+            byteSpan.Fill(255);
+
+            var partitioner = Partitioner.Create(0, solver.ObjectsCount, solver.ObjectsCount / Environment.ProcessorCount + 1);
+            Parallel.ForEach(partitioner, range =>
+            {
+                for (int i = range.Item1; i < range.Item2; i++)
+                {
+                    ref var obj = ref solver[i];
+                    Pixel24 color = new Pixel24 { R = obj.Color.R, B = obj.Color.B, G = obj.Color.G };
+                    imageData.FillCircle(300 * RATIO, obj.Position.X * RATIO, obj.Position.Y * RATIO, 0.5f * RATIO, color);
+                }
+            });
+
+            writeableBitmap.WritePixels(wbDirtyRect, imageData, 3 * 300 * RATIO, 0);
+            writeableBitmap.AddDirtyRect(wbDirtyRect);
+
+            writeableBitmap.Unlock();
             swRender.Stop();
         }
 
