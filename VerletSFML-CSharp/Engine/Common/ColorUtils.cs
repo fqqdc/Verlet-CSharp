@@ -10,13 +10,12 @@ namespace VerletSFML_CSharp.Engine.Common
 {
     public static class ColorUtils
     {
-        public static Color CreateColor(Vector3 vec)
+        public static Pixel24 CreateColor(Vector3 vec)
         {
-            //return Color.FromRgb((byte)vec.X, (byte)vec.Y, (byte)vec.Z);
-            return Color.FromArgb((int)vec.X, (int)vec.Y, (int)vec.Z);
+            return new() { R = (byte)vec.X, G = (byte)vec.Y, B = (byte)vec.Z };
         }
 
-        public static Color GetRainbow(float t)
+        public static Pixel24 GetRainbow(float t)
         {
             float r = MathF.Sin(t);
             float g = MathF.Sin(t + 0.33f * 2.0f * MathF.PI);

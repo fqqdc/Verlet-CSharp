@@ -5,6 +5,7 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+using VerletSFML_CSharp.Engine.Common;
 
 namespace VerletSFML_CSharp.Physics
 {
@@ -13,7 +14,7 @@ namespace VerletSFML_CSharp.Physics
         public Vector2 Position = new(0f, 0f);
         public Vector2 LastPosition = new(0f, 0f);
         public Vector2 Acceleration = new(0f, 0f);
-        public Color Color;
+        public Pixel24 Color;
 
         public void SetPosition(Vector2 pos)
         {

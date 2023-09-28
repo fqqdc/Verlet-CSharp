@@ -169,8 +169,7 @@ namespace VerletSFML_CSharp
                 for (int i = range.Item1; i < range.Item2; i++)
                 {
                     ref var obj = ref solver[i];
-                    Pixel24 color = new Pixel24 { R = obj.Color.R, B = obj.Color.B, G = obj.Color.G };
-                    imageData.FillCircle(300 * RATIO, obj.Position.X * RATIO, obj.Position.Y * RATIO, 0.5f * RATIO, color);
+                    imageData.FillCircle(300 * RATIO, obj.Position.X * RATIO, obj.Position.Y * RATIO, 0.5f * RATIO, obj.Color);
                 }
             });
 
