@@ -6,7 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 
-namespace VerletSFML_CSharp
+namespace Verlet_CSharp
 {
     /// <summary>
     /// Interaction logic for App.xaml

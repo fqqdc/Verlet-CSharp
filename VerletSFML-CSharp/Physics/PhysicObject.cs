@@ -5,9 +5,9 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
-using VerletSFML_CSharp.Engine.Common;
+using Verlet_CSharp.Engine.Common;
 
-namespace VerletSFML_CSharp.Physics
+namespace Verlet_CSharp.Physics
 {
     public struct PhysicObject
     {

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace VerletSFML_CSharp.Engine.Common
+namespace Verlet_CSharp.Engine.Common
 {
     public struct Pixel24
     {

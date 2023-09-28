@@ -5,9 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media.Media3D;
-using VerletSFML_CSharp.Engine.Common;
+using Verlet_CSharp.Engine.Common;
 
-namespace VerletSFML_CSharp.Physics
+namespace Verlet_CSharp.Physics
 {
     public class CollisionGrid
     {

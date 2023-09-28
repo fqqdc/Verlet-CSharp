@@ -23,10 +23,10 @@ using System.Windows.Media.Media3D;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
-using VerletSFML_CSharp.Engine.Common;
-using VerletSFML_CSharp.Physics;
+using Verlet_CSharp.Engine.Common;
+using Verlet_CSharp.Physics;
 
-namespace VerletSFML_CSharp
+namespace Verlet_CSharp
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml

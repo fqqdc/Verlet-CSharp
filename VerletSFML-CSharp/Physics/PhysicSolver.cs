@@ -9,10 +9,10 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Controls;
-using VerletSFML_CSharp.Engine.Common;
+using Verlet_CSharp.Engine.Common;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
-namespace VerletSFML_CSharp.Physics
+namespace Verlet_CSharp.Physics
 {
     public class PhysicSolver
     {

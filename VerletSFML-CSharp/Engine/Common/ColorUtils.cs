@@ -6,7 +6,7 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace VerletSFML_CSharp.Engine.Common
+namespace Verlet_CSharp.Engine.Common
 {
     public static class ColorUtils
     {
