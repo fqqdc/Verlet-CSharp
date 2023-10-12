@@ -190,12 +190,15 @@ namespace Verlet_CSharp
             var tsRender = swRender.Elapsed;
             if (tsRender > maxRender) maxRender = tsRender;
 
-            StringBuilder sbTitle = new();
-            sbTitle.Append("VerletSFML-CSharp");
-            sbTitle.Append($" | {solver.ObjectsCount,10}");
-            sbTitle.Append($" | Solver:{(int)tsSolver.TotalMicroseconds,10}us({(int)maxSolver.TotalMicroseconds,10}us)");
-            sbTitle.Append($" | UI:{(int)tsRender.TotalMicroseconds,10}us({(int)maxRender.TotalMicroseconds,10}us)");
-            Title = sbTitle.ToString();
+            //StringBuilder sbTitle = new();
+            //sbTitle.Append("VerletSFML-CSharp");
+            //sbTitle.Append($" | {solver.ObjectsCount,10}");
+            //sbTitle.Append($" | Solver:{(int)tsSolver.TotalMicroseconds,10}us({(int)maxSolver.TotalMicroseconds,10}us)");
+            //sbTitle.Append($" | UI:{(int)tsRender.TotalMicroseconds,10}us({(int)maxRender.TotalMicroseconds,10}us)");
+            //Title = sbTitle.ToString();
+            txtBall.Text = $"{solver.ObjectsCount}";
+            txtSolver.Text = $"{(int)tsSolver.TotalMicroseconds}us({(int)maxSolver.TotalMicroseconds}us)";
+            txtUI.Text = $"{(int)tsRender.TotalMicroseconds}us({(int)maxRender.TotalMicroseconds}us)";
         }
     }
 }

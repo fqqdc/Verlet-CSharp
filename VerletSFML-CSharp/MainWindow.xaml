@@ -6,9 +6,38 @@
         xmlns:local="clr-namespace:Verlet_CSharp"
         mc:Ignorable="d"
         Title="VerletSFML-CSharp" Height="1080" Width="1920" >
-    <Viewbox HorizontalAlignment="Center" VerticalAlignment="Center" >
-        <!--<local:DrawingCanves x:Name="renderCanvas" Width="300" Height="300">
+    <Grid>        
+        <Viewbox HorizontalAlignment="Center" VerticalAlignment="Center">
+            <!--<local:DrawingCanves x:Name="renderCanvas" Width="300" Height="300">
         </local:DrawingCanves>-->
-        <Image x:Name="RenderImage"  />
-    </Viewbox>
+            <Image x:Name="RenderImage"  />
+        </Viewbox>
+
+        <Grid HorizontalAlignment="Left" VerticalAlignment="Center" Margin="5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition />
+                <RowDefinition />
+                <RowDefinition />
+            </Grid.RowDefinitions>
+            <Grid.Resources>
+                <Style TargetType="TextBlock">
+                    <Setter Property="Padding" Value="5" />
+                </Style>
+            </Grid.Resources>
+
+            <TextBlock Text="Balls:" Grid.Column="0" Grid.Row="0"  />
+            <TextBlock x:Name="txtBall" Text="0" Grid.Column="1" Grid.Row="0" />
+
+            <TextBlock Text="Solver:" Grid.Column="0" Grid.Row="1" Padding="5" />
+            <TextBlock x:Name="txtSolver" Text="0" Grid.Column="1" Grid.Row="1"  />
+
+            <TextBlock Text="UI:" Grid.Column="0" Grid.Row="2"  />
+            <TextBlock x:Name="txtUI" Text="0" Grid.Column="1" Grid.Row="2"  />
+        </Grid>
+
+    </Grid>
 </Window>
