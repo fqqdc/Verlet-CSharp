@@ -35,6 +35,7 @@ namespace Verlet_CSharp
     {
         private Vector2 worldSize;
         private PhysicSolver solver;
+        private DispatcherTimer timerUpdate = new();
 
         public MainWindow()
         {
@@ -45,60 +46,64 @@ namespace Verlet_CSharp
 
             InitUpdateUI_RenderImage();
 
-            mainTask = Task.Run(MainLoop);
+            timerUpdate.Interval = TimeSpan.FromSeconds(dtUpdate);
+            timerUpdate.Tick += TimerUpdate_Tick;
+            timerUpdate.Start();
+        }
+
+        Task? taskUpdateSolver;
+        Task? taskUpdateRenderImage;
+        const float dtUpdate = 1.0f / 60;
+
+        private void TimerUpdate_Tick(object? sender, EventArgs e)
+        {
+            if (taskUpdateRenderImage != null)
+            {
+                if (!taskUpdateRenderImage.IsCompleted)
+                    return;
+
+                UpdateTitle();
+                UpdateWriteableBitmap();
+
+                Debug.Assert(taskUpdateSolver != null);
+                taskUpdateSolver.Dispose();
+                Debug.Assert(taskUpdateRenderImage != null);
+                taskUpdateRenderImage.Dispose();
+            }
+            taskUpdateSolver = Task.Run(UpdateSolver);
+            taskUpdateRenderImage = taskUpdateSolver.ContinueWith(t => UpdateRenderImage());
+        }
+
+        Stopwatch swUpdateSolver = new();
+        private void UpdateSolver()
+        {
+            swUpdateSolver.Restart();
+            if (solver.ObjectsCount < 80000)
+            {
+                for (int i = 10; i > 0; i--)
+                {
+                    var id = solver.CreateObject(new(2.0f, 10.0f + 1.1f * i));
+                    solver[id].AddVelocity(Vector2.UnitX * 0.2f);
+                    solver[id].Color = ColorUtils.GetRainbow(id * 0.0001f);
+
+                    id = solver.CreateObject(new(298.0f, 10.0f + 1.1f * i));
+                    solver[id].AddVelocity(Vector2.UnitX * -0.2f);
+                    solver[id].Color = ColorUtils.GetRainbow(id * 0.0001f);
+                }
+            }
+            solver.Update(dtUpdate);
+            swUpdateSolver.Stop();
         }
 
         protected override void OnClosing(CancelEventArgs e)
         {
-            if (mainTask != null && mainTask.Status == TaskStatus.Running)
+            if (timerUpdate.IsEnabled)
             {
-                IsMainLoopRunning = false;
+                timerUpdate.Stop();
                 e.Cancel = true;
             }
         }
 
-
-        bool IsMainLoopRunning = true;
-        bool emit = true;
-        int fpsCap = 60;
-
-
-        Task? mainTask;
-        Stopwatch swSolver = new();
-        Stopwatch swRender = new();
-
-        public void MainLoop()
-        {
-            float dt = 1.0f / fpsCap;
-
-            while (IsMainLoopRunning)
-            {
-                swSolver.Restart();
-                if (solver.ObjectsCount < 80000 && emit)
-                {
-                    for (int i = 10; i > 0; i--)
-                    {
-                        var id = solver.CreateObject(new(2.0f, 10.0f + 1.1f * i));
-                        solver[id].AddVelocity(Vector2.UnitX * 0.2f);
-                        solver[id].Color = ColorUtils.GetRainbow(id * 0.0001f);
-
-                        id = solver.CreateObject(new(298.0f, 10.0f + 1.1f * i));
-                        solver[id].AddVelocity(Vector2.UnitX * -0.2f);
-                        solver[id].Color = ColorUtils.GetRainbow(id * 0.0001f);
-                    }
-                }
-
-                solver.Update(dt);
-                swSolver.Stop();
-
-                Dispatcher.Invoke(UpdateUI_RenderImage);
-                Dispatcher.Invoke(UpdateTitle);
-
-                var waitTime = dt - swSolver.Elapsed.TotalSeconds;
-                if (waitTime > 0)
-                    Thread.Sleep(TimeSpan.FromSeconds(waitTime));
-            }
-        }
         const int RATIO = 6;
 
         //RenderTargetBitmap bitmap = new RenderTargetBitmap(
@@ -152,13 +157,10 @@ namespace Verlet_CSharp
             RenderImage.Source = writeableBitmap;
         }
 
-        private void UpdateUI_RenderImage()
+        Stopwatch swUpdateRender = new();
+        private void UpdateRenderImage()
         {
-            Debug.Assert(writeableBitmap != null);
-
-            swRender.Restart();
-            writeableBitmap.Lock();
-
+            swUpdateRender.Restart();
             var spanPixels = new Span<Pixel24>(imageData);
             var byteSpan = MemoryMarshal.Cast<Pixel24, byte>(spanPixels);
             byteSpan.Fill(255);
@@ -172,22 +174,26 @@ namespace Verlet_CSharp
                     imageData.FillCircle(300 * RATIO, obj.Position.X * RATIO, obj.Position.Y * RATIO, 0.5f * RATIO, obj.Color);
                 }
             });
+            swUpdateRender.Stop();
+        }
 
+        private void UpdateWriteableBitmap()
+        {
+            Debug.Assert(writeableBitmap != null);
+            writeableBitmap.Lock();
             writeableBitmap.WritePixels(wbDirtyRect, imageData, 3 * 300 * RATIO, 0);
             writeableBitmap.AddDirtyRect(wbDirtyRect);
-
             writeableBitmap.Unlock();
-            swRender.Stop();
         }
 
         TimeSpan maxSolver = TimeSpan.Zero;
         TimeSpan maxRender = TimeSpan.Zero;
         public void UpdateTitle()
         {
-            var tsSolver = swSolver.Elapsed;
+            var tsSolver = swUpdateSolver.Elapsed;
             if (tsSolver > maxSolver) maxSolver = tsSolver;
             //var tsRender = renderCanvas.TimeSpanRender;
-            var tsRender = swRender.Elapsed;
+            var tsRender = swUpdateRender.Elapsed;
             if (tsRender > maxRender) maxRender = tsRender;
 
             //StringBuilder sbTitle = new();
