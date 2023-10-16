@@ -35,7 +35,7 @@ namespace Verlet_CSharp
     {
         private Vector2 worldSize;
         private PhysicSolver solver;
-        private DispatcherTimer timerUpdate = new();
+        private DispatcherTimer timerUpdate = new(DispatcherPriority.Send);
 
         public MainWindow()
         {
