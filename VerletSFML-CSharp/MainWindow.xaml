@@ -5,12 +5,10 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Verlet_CSharp"
         mc:Ignorable="d"
-        Title="VerletSFML-CSharp" Height="1080" Width="1920" >
+        Title="VerletSFML-CSharp" Height="1080" Width="1920" MouseLeftButtonDown="Window_MouseLeftButtonDown" IsHitTestVisible="True" >
     <Grid>        
-        <Viewbox HorizontalAlignment="Center" VerticalAlignment="Center">
-            <!--<local:DrawingCanves x:Name="renderCanvas" Width="300" Height="300">
-        </local:DrawingCanves>-->
-            <Image x:Name="RenderImage"  />
+        <Viewbox HorizontalAlignment="Center" VerticalAlignment="Center" Margin="5">
+            <Image x:Name="RenderImage" />
         </Viewbox>
 
         <Grid HorizontalAlignment="Left" VerticalAlignment="Center" Margin="5">
@@ -22,6 +20,7 @@
                 <RowDefinition />
                 <RowDefinition />
                 <RowDefinition />
+                <RowDefinition />
             </Grid.RowDefinitions>
             <Grid.Resources>
                 <Style TargetType="TextBlock">
@@ -29,14 +28,16 @@
                 </Style>
             </Grid.Resources>
 
-            <TextBlock Text="Balls:" Grid.Column="0" Grid.Row="0"  />
+            <TextBlock Text="小球数量:" Grid.Column="0" Grid.Row="0"  />
             <TextBlock x:Name="txtBall" Text="0" Grid.Column="1" Grid.Row="0" />
 
-            <TextBlock Text="Solver:" Grid.Column="0" Grid.Row="1" Padding="5" />
+            <TextBlock Text="计算速度:" Grid.Column="0" Grid.Row="1" Padding="5" />
             <TextBlock x:Name="txtSolver" Text="0" Grid.Column="1" Grid.Row="1"  />
 
-            <TextBlock Text="UI:" Grid.Column="0" Grid.Row="2"  />
+            <TextBlock Text="渲染速度:" Grid.Column="0" Grid.Row="2"  />
             <TextBlock x:Name="txtUI" Text="0" Grid.Column="1" Grid.Row="2"  />
+
+            <TextBlock Text="双击窗体启动或暂停" Grid.Column="0" Grid.Row="3" Grid.ColumnSpan="2"   />
         </Grid>
 
     </Grid>

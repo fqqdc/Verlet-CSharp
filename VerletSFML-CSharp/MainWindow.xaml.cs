@@ -48,7 +48,6 @@ namespace Verlet_CSharp
 
             timerUpdate.Interval = TimeSpan.FromSeconds(dtUpdate);
             timerUpdate.Tick += TimerUpdate_Tick;
-            timerUpdate.Start();
         }
 
         Task? taskUpdateSolver;
@@ -75,12 +74,13 @@ namespace Verlet_CSharp
         }
 
         Stopwatch swUpdateSolver = new();
+        float ballNumber = 1;
         private void UpdateSolver()
         {
-            swUpdateSolver.Restart();
-            if (solver.ObjectsCount < 80000)
+            ballNumber += dtUpdate;
+            if (solver.ObjectsCount < 90000)
             {
-                for (int i = 10; i > 0; i--)
+                for (int i = (int)ballNumber; i > 0; i--)
                 {
                     var id = solver.CreateObject(new(2.0f, 10.0f + 1.1f * i));
                     solver[id].AddVelocity(Vector2.UnitX * 0.2f);
@@ -91,17 +91,9 @@ namespace Verlet_CSharp
                     solver[id].Color = ColorUtils.GetRainbow(id * 0.0001f);
                 }
             }
+            swUpdateSolver.Restart();
             solver.Update(dtUpdate);
             swUpdateSolver.Stop();
-        }
-
-        protected override void OnClosing(CancelEventArgs e)
-        {
-            if (timerUpdate.IsEnabled)
-            {
-                timerUpdate.Stop();
-                e.Cancel = true;
-            }
         }
 
         const int RATIO = 6;
@@ -163,7 +155,7 @@ namespace Verlet_CSharp
             swUpdateRender.Restart();
             var spanPixels = new Span<Pixel24>(imageData);
             var byteSpan = MemoryMarshal.Cast<Pixel24, byte>(spanPixels);
-            byteSpan.Fill(255);
+            byteSpan.Fill(0);
 
             var partitioner = Partitioner.Create(0, solver.ObjectsCount, solver.ObjectsCount / Environment.ProcessorCount + 1);
             Parallel.ForEach(partitioner, range =>
@@ -206,5 +198,19 @@ namespace Verlet_CSharp
             txtSolver.Text = $"{(int)tsSolver.TotalMicroseconds}us({(int)maxSolver.TotalMicroseconds}us)";
             txtUI.Text = $"{(int)tsRender.TotalMicroseconds}us({(int)maxRender.TotalMicroseconds}us)";
         }
+
+
+        DateTime lastButtonDown = DateTime.MinValue;
+        private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            var now = DateTime.Now;
+            var dt = now - lastButtonDown;
+            lastButtonDown = now;
+            if (dt.TotalMilliseconds > 300)
+                return;
+
+            timerUpdate.IsEnabled = !timerUpdate.IsEnabled;
+        }
+
     }
 }
