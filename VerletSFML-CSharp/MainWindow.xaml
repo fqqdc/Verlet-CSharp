@@ -21,6 +21,7 @@
                 <RowDefinition />
                 <RowDefinition />
                 <RowDefinition />
+                <RowDefinition />
             </Grid.RowDefinitions>
             <Grid.Resources>
                 <Style TargetType="TextBlock">
@@ -34,10 +35,13 @@
             <TextBlock Text="计算速度:" Grid.Column="0" Grid.Row="1" Padding="5" />
             <TextBlock x:Name="txtSolver" Text="0" Grid.Column="1" Grid.Row="1"  />
 
-            <TextBlock Text="渲染速度:" Grid.Column="0" Grid.Row="2"  />
-            <TextBlock x:Name="txtUI" Text="0" Grid.Column="1" Grid.Row="2"  />
+            <TextBlock Text="位图更新:" Grid.Column="0" Grid.Row="2"  />
+            <TextBlock x:Name="txtBitmap" Text="0" Grid.Column="1" Grid.Row="2"  />
 
-            <TextBlock Text="双击窗体启动或暂停" Grid.Column="0" Grid.Row="3" Grid.ColumnSpan="2"   />
+            <TextBlock Text="渲染速度:" Grid.Column="0" Grid.Row="3"  />
+            <TextBlock x:Name="txtRender" Text="0" Grid.Column="1" Grid.Row="3"  />
+
+            <TextBlock Text="双击窗体启动或暂停" FontWeight="Bold" Grid.Column="0" Grid.Row="4" Grid.ColumnSpan="2"   />
         </Grid>
 
     </Grid>

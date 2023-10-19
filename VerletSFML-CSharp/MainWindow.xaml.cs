@@ -53,8 +53,9 @@ namespace Verlet_CSharp
         Task? taskUpdateSolver;
         Task? taskUpdateRenderImage;
         const float dtUpdate = 1.0f / 60;
+        
 
-        private void TimerUpdate_Tick(object? sender, EventArgs e)
+        private void TimerUpdate_Tick_Task(object? sender, EventArgs e)
         {
             if (taskUpdateRenderImage != null)
             {
@@ -71,6 +72,22 @@ namespace Verlet_CSharp
             }
             taskUpdateSolver = Task.Run(UpdateSolver);
             taskUpdateRenderImage = taskUpdateSolver.ContinueWith(t => UpdateRenderImage());
+        }
+
+        bool updateRunning = false;
+        private async void TimerUpdate_Tick(object? sender, EventArgs e)
+        {
+            if(updateRunning) return;
+
+            updateRunning = true;
+
+            await Task.Run(UpdateSolver);
+            await Task.Run(UpdateRenderImage);
+
+            UpdateWriteableBitmap();
+            UpdateTitle();
+
+            updateRunning = false;
         }
 
         Stopwatch swUpdateSolver = new();
@@ -149,10 +166,10 @@ namespace Verlet_CSharp
             RenderImage.Source = writeableBitmap;
         }
 
-        Stopwatch swUpdateRender = new();
+        Stopwatch swUpdateBitmap = new();
         private void UpdateRenderImage()
         {
-            swUpdateRender.Restart();
+            swUpdateBitmap.Restart();
             var spanPixels = new Span<Pixel24>(imageData);
             var byteSpan = MemoryMarshal.Cast<Pixel24, byte>(spanPixels);
             byteSpan.Fill(0);
@@ -166,37 +183,29 @@ namespace Verlet_CSharp
                     imageData.FillCircle(300 * RATIO, obj.Position.X * RATIO, obj.Position.Y * RATIO, 0.5f * RATIO, obj.Color);
                 }
             });
-            swUpdateRender.Stop();
+            swUpdateBitmap.Stop();
         }
 
+        Stopwatch swUpdateRender = new();
         private void UpdateWriteableBitmap()
         {
+            swUpdateRender.Restart();
+
             Debug.Assert(writeableBitmap != null);
             writeableBitmap.Lock();
             writeableBitmap.WritePixels(wbDirtyRect, imageData, 3 * 300 * RATIO, 0);
             writeableBitmap.AddDirtyRect(wbDirtyRect);
             writeableBitmap.Unlock();
+
+            swUpdateRender.Stop();
         }
 
-        TimeSpan maxSolver = TimeSpan.Zero;
-        TimeSpan maxRender = TimeSpan.Zero;
         public void UpdateTitle()
         {
-            var tsSolver = swUpdateSolver.Elapsed;
-            if (tsSolver > maxSolver) maxSolver = tsSolver;
-            //var tsRender = renderCanvas.TimeSpanRender;
-            var tsRender = swUpdateRender.Elapsed;
-            if (tsRender > maxRender) maxRender = tsRender;
-
-            //StringBuilder sbTitle = new();
-            //sbTitle.Append("VerletSFML-CSharp");
-            //sbTitle.Append($" | {solver.ObjectsCount,10}");
-            //sbTitle.Append($" | Solver:{(int)tsSolver.TotalMicroseconds,10}us({(int)maxSolver.TotalMicroseconds,10}us)");
-            //sbTitle.Append($" | UI:{(int)tsRender.TotalMicroseconds,10}us({(int)maxRender.TotalMicroseconds,10}us)");
-            //Title = sbTitle.ToString();
             txtBall.Text = $"{solver.ObjectsCount}";
-            txtSolver.Text = $"{(int)tsSolver.TotalMicroseconds}us({(int)maxSolver.TotalMicroseconds}us)";
-            txtUI.Text = $"{(int)tsRender.TotalMicroseconds}us({(int)maxRender.TotalMicroseconds}us)";
+            txtSolver.Text = $"{(int)swUpdateSolver.Elapsed.TotalMicroseconds}us";
+            txtBitmap.Text = $"{(int)swUpdateBitmap.Elapsed.TotalMicroseconds}us";
+            txtRender.Text = $"{(int)swUpdateRender.Elapsed.TotalMicroseconds}us";
         }
 
 
