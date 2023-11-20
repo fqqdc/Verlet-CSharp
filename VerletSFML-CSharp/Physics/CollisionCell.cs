@@ -1,17 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Verlet_CSharp.Engine.Common;
+﻿using System.Runtime.CompilerServices;
 
 namespace Verlet_CSharp.Physics
 {
+
+    [InlineArray(CollisionCell.CellCapacity)]
+    public struct SubCells
+    {
+        int int_0;
+    }
+
+
     public struct CollisionCell
     {
-        const int CellCapacity = 4;
+        internal const int CellCapacity = 4;
 
-        public Ints4 Objects;
+        public SubCells Objects;
 
         public int ObjectsCount { get; private set; }
 
