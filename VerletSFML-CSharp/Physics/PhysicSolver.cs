@@ -64,19 +64,17 @@ namespace Verlet_CSharp.Physics
 
         private void CheckAtomCellCollisions(int atom_idx, ref CollisionCell c)
         {
-            var cObjects = Ints4.CreateSpan(ref c.Objects);
             for (int i = 0; i < c.ObjectsCount; ++i)
             {
-                SolveContact(atom_idx, cObjects[i]);
+                SolveContact(atom_idx, c.Objects[i]);
             }
         }
 
         void ProcessCell(ref CollisionCell c, int index)
         {
-            var cObjects = Ints4.CreateSpan(ref c.Objects);
             for (int i = 0; i < c.ObjectsCount; ++i)
             {
-                int atom_idx = cObjects[i];
+                int atom_idx = c.Objects[i];
                 CheckAtomCellCollisions(atom_idx, ref grid[index - 1]);
                 CheckAtomCellCollisions(atom_idx, ref grid[index]);
                 CheckAtomCellCollisions(atom_idx, ref grid[index + 1]);

@@ -53,7 +53,7 @@ namespace Verlet_CSharp
         Task? taskUpdateSolver;
         Task? taskUpdateRenderImage;
         const float dtUpdate = 1.0f / 60;
-        
+
 
         private void TimerUpdate_Tick_Task(object? sender, EventArgs e)
         {
@@ -77,7 +77,7 @@ namespace Verlet_CSharp
         bool updateRunning = false;
         private async void TimerUpdate_Tick(object? sender, EventArgs e)
         {
-            if(updateRunning) return;
+            if (updateRunning) return;
 
             updateRunning = true;
 
@@ -94,7 +94,9 @@ namespace Verlet_CSharp
         float ballNumber = 1;
         private void UpdateSolver()
         {
-            ballNumber += dtUpdate;
+            if (ballNumber < 10)
+                ballNumber += dtUpdate * 0.5f;
+
             if (solver.ObjectsCount < 90000)
             {
                 for (int i = (int)ballNumber; i > 0; i--)

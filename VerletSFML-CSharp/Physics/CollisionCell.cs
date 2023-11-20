@@ -17,7 +17,7 @@ namespace Verlet_CSharp.Physics
 
         public void AddAtom(int id)
         {
-            Objects.Item(ObjectsCount) = id;
+            Objects[ObjectsCount] = id;
             if (ObjectsCount < CellCapacity - 1)
                 ObjectsCount += 1;
         }
@@ -29,13 +29,12 @@ namespace Verlet_CSharp.Physics
 
         public void Remove(int id)
         {
-            var objects = Ints4.CreateSpan(ref Objects);
             for (int i = 0; i < ObjectsCount; ++i)
             {
-                if (objects[i] == id)
+                if (Objects[i] == id)
                 {
                     // Swap pop
-                    objects[i] = objects[ObjectsCount - 1];
+                    Objects[i] = Objects[ObjectsCount - 1];
                     --ObjectsCount;
                     return;
                 }
