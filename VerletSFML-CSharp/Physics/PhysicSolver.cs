@@ -177,7 +177,8 @@ namespace Verlet_CSharp.Physics
         {
             if (objects.Count == 0) return;
 
-            var partitioner = Partitioner.Create(0, objects.Count, objects.Count / threadCount + 1);
+            var partitionerSize = (objects.Count + threadCount - 1) / threadCount;
+            var partitioner = Partitioner.Create(0, objects.Count, partitionerSize);
 
             Parallel.ForEach(partitioner, range =>
             {
