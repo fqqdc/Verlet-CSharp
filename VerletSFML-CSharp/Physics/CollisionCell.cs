@@ -6,7 +6,11 @@ namespace Verlet_CSharp.Physics
     [InlineArray(CollisionCell.CellCapacity)]
     public struct SubCells
     {
-        int int_0;
+#pragma warning disable IDE0051 // 删除未使用的私有成员
+#pragma warning disable IDE0044 // 添加只读修饰符
+        int _elememt;
+#pragma warning restore IDE0044 // 添加只读修饰符
+#pragma warning restore IDE0051 // 删除未使用的私有成员
     }
 
 

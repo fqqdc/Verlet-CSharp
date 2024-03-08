@@ -34,8 +34,8 @@ namespace Verlet_CSharp
     public partial class MainWindow : Window
     {
         private Vector2 worldSize;
-        private PhysicSolver solver;
-        private DispatcherTimer timerUpdate = new(DispatcherPriority.Send);
+        private readonly PhysicSolver solver;
+        private readonly DispatcherTimer timerUpdate = new(DispatcherPriority.Send);
 
         public MainWindow()
         {
@@ -90,7 +90,7 @@ namespace Verlet_CSharp
             updateRunning = false;
         }
 
-        Stopwatch swUpdateSolver = new();
+        readonly Stopwatch swUpdateSolver = new();
         float ballNumber = 1;
         private void UpdateSolver()
         {
@@ -159,7 +159,7 @@ namespace Verlet_CSharp
 
         Int32Rect wbDirtyRect = Int32Rect.Empty;
         WriteableBitmap? writeableBitmap;
-        Pixel24[] imageData = Array.Empty<Pixel24>();
+        Pixel24[] imageData = [];
         private void InitUpdateUI_RenderImage()
         {
             imageData = new Pixel24[300 * RATIO * 300 * RATIO];
@@ -168,15 +168,18 @@ namespace Verlet_CSharp
             RenderImage.Source = writeableBitmap;
         }
 
-        Stopwatch swUpdateBitmap = new();
+        readonly Stopwatch swUpdateBitmap = new();
         private void UpdateRenderImage()
         {
             swUpdateBitmap.Restart();
-            var spanPixels = new Span<Pixel24>(imageData);
-            var byteSpan = MemoryMarshal.Cast<Pixel24, byte>(spanPixels);
-            byteSpan.Fill(0);
+            var spanPixels = imageData.AsSpan();
 
-            var partitioner = Partitioner.Create(0, solver.ObjectsCount, solver.ObjectsCount / Environment.ProcessorCount + 1);
+            var byteSpan = MemoryMarshal.Cast<Pixel24, byte>(spanPixels);
+            byteSpan.Clear();
+
+            var partitionerSize = (solver.ObjectsCount + Environment.ProcessorCount - 1) / Environment.ProcessorCount;
+            var partitioner = Partitioner.Create(0, solver.ObjectsCount, partitionerSize);
+
             Parallel.ForEach(partitioner, range =>
             {
                 for (int i = range.Item1; i < range.Item2; i++)
@@ -188,7 +191,7 @@ namespace Verlet_CSharp
             swUpdateBitmap.Stop();
         }
 
-        Stopwatch swUpdateRender = new();
+        readonly Stopwatch swUpdateRender = new();
         private void UpdateWriteableBitmap()
         {
             swUpdateRender.Restart();

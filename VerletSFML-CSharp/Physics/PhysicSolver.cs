@@ -1,28 +1,21 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Controls;
-using Verlet_CSharp.Engine.Common;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Verlet_CSharp.Physics
 {
     public class PhysicSolver
     {
-        List<PhysicObject> objects = new();
-        CollisionGrid grid;
+        readonly List<PhysicObject> objects = [];
+        readonly CollisionGrid grid;
         Vector2 worldSize = Vector2.Zero;
         Vector2 gravity = new(0, 20);
-        int sub_steps;
+        readonly int sub_steps;
 
-        int threadCount = Environment.ProcessorCount;
+        readonly int threadCount = Environment.ProcessorCount;
 
         public int ObjectsCount { get => objects.Count; }
         public ref PhysicObject this[int index] { get => ref CollectionsMarshal.AsSpan(objects)[index]; }
@@ -104,7 +97,7 @@ namespace Verlet_CSharp.Physics
         private void SolveCollisionsParallel()
         {
             // Multi-thread grid
-            int threadCount = Environment.ProcessorCount * 3;
+            int threadCount = Environment.ProcessorCount;
 
             int sliceCount = threadCount * 2;
             int sliceSize = (grid.Width / sliceCount + 1) * grid.Height;
@@ -122,7 +115,9 @@ namespace Verlet_CSharp.Physics
             });
         }
 
+#pragma warning disable IDE0051 // 删除未使用的私有成员
         private void SolveCollisions()
+#pragma warning restore IDE0051 // 删除未使用的私有成员
         {
             for (int i = 0; i < grid.Width; i++)
             {
@@ -229,7 +224,9 @@ namespace Verlet_CSharp.Physics
             });
         }
 
+#pragma warning disable IDE0051 // 删除未使用的私有成员
         private void UpdateObjects(float dt)
+#pragma warning restore IDE0051 // 删除未使用的私有成员
         {
             for (int i = 0; i < objects.Count; ++i)
             {
