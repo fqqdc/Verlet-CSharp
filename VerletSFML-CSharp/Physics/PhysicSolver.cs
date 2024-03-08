@@ -96,9 +96,6 @@ namespace Verlet_CSharp.Physics
         // Find colliding atoms
         private void SolveCollisionsParallel()
         {
-            // Multi-thread grid
-            int threadCount = Environment.ProcessorCount;
-
             int sliceCount = threadCount * 2;
             int sliceSize = (grid.Width / sliceCount + 1) * grid.Height;
 
@@ -115,9 +112,7 @@ namespace Verlet_CSharp.Physics
             });
         }
 
-#pragma warning disable IDE0051 // 删除未使用的私有成员
         private void SolveCollisions()
-#pragma warning restore IDE0051 // 删除未使用的私有成员
         {
             for (int i = 0; i < grid.Width; i++)
             {
@@ -138,8 +133,6 @@ namespace Verlet_CSharp.Physics
             return AddObject(new(pos));
         }
 
-
-
         public void Update(float dt)
         {
             // Perform the sub steps
@@ -147,11 +140,20 @@ namespace Verlet_CSharp.Physics
             for (int i = sub_steps; i > 0; i--)
             {
                 AddObjectsToGrid();
-                //SolveCollisions();
                 SolveCollisionsParallel();
-                //UpdateObjects(sub_dt);
                 UpdateObjectsParallel(sub_dt);
-                //UpdateObjectsMulti(sub_dt);
+            }
+        }
+
+        public void UpdateNotParallel(float dt)
+        {
+            // Perform the sub steps
+            float sub_dt = dt / sub_steps;
+            for (int i = sub_steps; i > 0; i--)
+            {
+                AddObjectsToGrid();
+                SolveCollisions();
+                UpdateObjects(sub_dt);
             }
         }
 
@@ -225,9 +227,7 @@ namespace Verlet_CSharp.Physics
             });
         }
 
-#pragma warning disable IDE0051 // 删除未使用的私有成员
         private void UpdateObjects(float dt)
-#pragma warning restore IDE0051 // 删除未使用的私有成员
         {
             for (int i = 0; i < objects.Count; ++i)
             {

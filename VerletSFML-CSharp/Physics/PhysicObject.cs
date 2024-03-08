@@ -1,18 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Numerics;
 using Verlet_CSharp.Engine.Common;
 
 namespace Verlet_CSharp.Physics
 {
-    public struct PhysicObject
+    public struct PhysicObject(Vector2 position)
     {
-        public Vector2 Position = new(0f, 0f);
-        public Vector2 LastPosition = new(0f, 0f);
+        public Vector2 Position = position;
+        public Vector2 LastPosition = position;
         public Vector2 Acceleration = new(0f, 0f);
         public Pixel24 Color;
 
@@ -20,12 +14,6 @@ namespace Verlet_CSharp.Physics
         {
             Position = pos;
             LastPosition = pos;
-        }
-
-        public PhysicObject(Vector2 position)
-        {
-            this.Position = position;
-            this.LastPosition = position;
         }
 
         public void Update(float dt)
@@ -44,11 +32,11 @@ namespace Verlet_CSharp.Physics
 
         public void Slowdown(float ratio)
         {
-            LastPosition = LastPosition + ratio * (Position - LastPosition);
+            LastPosition += ratio * (Position - LastPosition);
         }
 
-        public float Speed { get => Vector2.Distance(Position, LastPosition); }
-        public Vector2 Velocity { get => Position - LastPosition; }
+        public readonly float Speed { get => Vector2.Distance(Position, LastPosition); }
+        public readonly Vector2 Velocity { get => Position - LastPosition; }
 
         public void AddVelocity(Vector2 v)
         {
