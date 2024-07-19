@@ -20,6 +20,8 @@ namespace Verlet_CSharp.Physics
         {
             Vector2 lastUpdateMove = Position - LastPosition;
             Vector2 newPosition = Position + lastUpdateMove + (Acceleration - lastUpdateMove * 40.0f) * (dt * dt);
+            // x(t+dt)=2*x(t)-x(t-dt)+a(t)*dt^2+E*dt^4
+            //Vector2 newPosition = Position * 2 - LastPosition + Acceleration * (dt * dt);
             LastPosition = Position;
             Position = newPosition;
             Acceleration = new(0f, 0f);
