@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Verlet_CSharp"
         mc:Ignorable="d"
-        Title="VerletSFML-CSharp" Height="1080" Width="1920" MouseLeftButtonDown="Window_MouseLeftButtonDown" IsHitTestVisible="True" >
+        Title="Verlet-CSharp" Height="1080" Width="1920" MouseLeftButtonDown="Window_MouseLeftButtonDown" IsHitTestVisible="True" >
     <Grid>        
         <Viewbox HorizontalAlignment="Center" VerticalAlignment="Center" Margin="5">
             <Image x:Name="RenderImage" />
