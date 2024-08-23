@@ -55,8 +55,6 @@ namespace Verlet_CSharp.Physics
         {
             for (int i = 0; i < c.ObjectsCount; ++i)
             {
-                //SolveContact(atom_idx, c.Objects[i]);
-
                 int atom_2_idx = c.Objects[i];
                 if (atom_idx == atom_2_idx)
                     continue;
