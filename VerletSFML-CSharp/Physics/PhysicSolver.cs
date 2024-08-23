@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
@@ -33,15 +34,10 @@ namespace Verlet_CSharp.Physics
         }
 
         // Checks if two atoms are colliding and if so create a new contact
-        private void SolveContact(int atom_1_idx, int atom_2_idx)
+        private void SolveContact(ref PhysicObject obj_1, ref PhysicObject obj_2)
         {
-            if (atom_1_idx == atom_2_idx)
-                return;
-
             const float response_coef = 1.0f;
             const float eps = 0.0001f;
-            ref PhysicObject obj_1 = ref this[atom_1_idx];
-            ref PhysicObject obj_2 = ref this[atom_2_idx];
             Vector2 o2_o1 = obj_1.Position - obj_2.Position;
             float dist2 = o2_o1.X * o2_o1.X + o2_o1.Y * o2_o1.Y;
             if (dist2 < 1.0f && dist2 > eps)
@@ -55,11 +51,17 @@ namespace Verlet_CSharp.Physics
             }
         }
 
-        private void CheckAtomCellCollisions(int atom_idx, ref CollisionCell c)
+        private void CheckAtomCellCollisions(int atom_idx, ref PhysicObject obj_1, ref CollisionCell c)
         {
             for (int i = 0; i < c.ObjectsCount; ++i)
             {
-                SolveContact(atom_idx, c.Objects[i]);
+                //SolveContact(atom_idx, c.Objects[i]);
+
+                int atom_2_idx = c.Objects[i];
+                if (atom_idx == atom_2_idx)
+                    continue;
+                ref PhysicObject obj_2 = ref this[atom_2_idx];
+                SolveContact(ref obj_1, ref obj_2);
             }
         }
 
@@ -68,15 +70,17 @@ namespace Verlet_CSharp.Physics
             for (int i = 0; i < c.ObjectsCount; ++i)
             {
                 int atom_idx = c.Objects[i];
-                CheckAtomCellCollisions(atom_idx, ref grid[index - 1]);
-                CheckAtomCellCollisions(atom_idx, ref grid[index]);
-                CheckAtomCellCollisions(atom_idx, ref grid[index + 1]);
-                CheckAtomCellCollisions(atom_idx, ref grid[index + grid.Height - 1]);
-                CheckAtomCellCollisions(atom_idx, ref grid[index + grid.Height]);
-                CheckAtomCellCollisions(atom_idx, ref grid[index + grid.Height + 1]);
-                CheckAtomCellCollisions(atom_idx, ref grid[index - grid.Height - 1]);
-                CheckAtomCellCollisions(atom_idx, ref grid[index - grid.Height]);
-                CheckAtomCellCollisions(atom_idx, ref grid[index - grid.Height + 1]);
+                ref PhysicObject obj_1 = ref this[atom_idx];
+
+                CheckAtomCellCollisions(atom_idx, ref obj_1, ref grid[index - 1]);
+                CheckAtomCellCollisions(atom_idx, ref obj_1, ref grid[index]);
+                CheckAtomCellCollisions(atom_idx, ref obj_1, ref grid[index + 1]);
+                CheckAtomCellCollisions(atom_idx, ref obj_1, ref grid[index + grid.Height - 1]);
+                CheckAtomCellCollisions(atom_idx, ref obj_1, ref grid[index + grid.Height]);
+                CheckAtomCellCollisions(atom_idx, ref obj_1, ref grid[index + grid.Height + 1]);
+                CheckAtomCellCollisions(atom_idx, ref obj_1, ref grid[index - grid.Height - 1]);
+                CheckAtomCellCollisions(atom_idx, ref obj_1, ref grid[index - grid.Height]);
+                CheckAtomCellCollisions(atom_idx, ref obj_1, ref grid[index - grid.Height + 1]);
             }
         }
 
