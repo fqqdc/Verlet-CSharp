@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
@@ -41,25 +42,6 @@ namespace Verlet_CSharp
         const float dtUpdate = 1.0f / 60;
 
 
-        private void TimerUpdate_Tick_Task(object? sender, EventArgs e)
-        {
-            if (taskUpdateRenderImage != null)
-            {
-                if (!taskUpdateRenderImage.IsCompleted)
-                    return;
-
-                UpdateTitle();
-                UpdateWriteableBitmap();
-
-                Debug.Assert(taskUpdateSolver != null);
-                taskUpdateSolver.Dispose();
-                Debug.Assert(taskUpdateRenderImage != null);
-                taskUpdateRenderImage.Dispose();
-            }
-            taskUpdateSolver = Task.Run(UpdateSolver);
-            taskUpdateRenderImage = taskUpdateSolver.ContinueWith(t => UpdateRenderImage());
-        }
-
         bool updateRunning = false;
         private async void TimerUpdate_Tick(object? sender, EventArgs e)
         {
@@ -83,7 +65,7 @@ namespace Verlet_CSharp
             if (ballNumber < 10)
                 ballNumber += dtUpdate * 0.5f;
 
-            if (solver.ObjectsCount < 90000)
+            if (solver.ObjectsCount < 9_0000)
             {
                 for (int i = (int)ballNumber; i > 0; i--)
                 {
@@ -145,10 +127,20 @@ namespace Verlet_CSharp
 
         Int32Rect wbDirtyRect = Int32Rect.Empty;
         WriteableBitmap? writeableBitmap;
-        Pixel24[] imageData = [];
+        ImageData buffer;
+
+        [InlineArray(300 * RATIO * 300 * RATIO)]
+        private struct ImageData
+        {
+#pragma warning disable IDE0051 // 删除未使用的私有成员
+#pragma warning disable IDE0044 // 添加只读修饰符
+            Pixel24 _elememt;
+#pragma warning restore IDE0044 // 添加只读修饰符
+#pragma warning restore IDE0051 // 删除未使用的私有成员
+        }
+
         private void InitUpdateUI_RenderImage()
         {
-            imageData = new Pixel24[300 * RATIO * 300 * RATIO];
             wbDirtyRect = new(0, 0, 300 * RATIO, 300 * RATIO);
             writeableBitmap = new WriteableBitmap(300 * RATIO, 300 * RATIO, 96, 96, PixelFormats.Bgr24, null);
             RenderImage.Source = writeableBitmap;
@@ -158,10 +150,9 @@ namespace Verlet_CSharp
         private void UpdateRenderImage()
         {
             swUpdateBitmap.Restart();
-            var spanPixels = imageData.AsSpan();
 
-            var byteSpan = MemoryMarshal.Cast<Pixel24, byte>(spanPixels);
-            byteSpan.Clear();
+            Span<Pixel24> bufferSpan = buffer;
+            bufferSpan.Clear();
 
             var partitionerSize = (solver.ObjectsCount + Environment.ProcessorCount - 1) / Environment.ProcessorCount;
             var partitioner = Partitioner.Create(0, solver.ObjectsCount, partitionerSize);
@@ -170,21 +161,25 @@ namespace Verlet_CSharp
             {
                 for (int i = range.Item1; i < range.Item2; i++)
                 {
+                    Span<Pixel24> span = buffer;
                     ref var obj = ref solver[i];
-                    imageData.FillCircle(300 * RATIO, obj.Position.X * RATIO, obj.Position.Y * RATIO, 0.5f * RATIO, obj.Color);
+                    span.FillCircle(300 * RATIO, obj.Position.X * RATIO, obj.Position.Y * RATIO, 0.5f * RATIO, obj.Color);
                 }
             });
+
             swUpdateBitmap.Stop();
         }
 
         readonly Stopwatch swUpdateRender = new();
-        private void UpdateWriteableBitmap()
+        private unsafe void UpdateWriteableBitmap()
         {
-            swUpdateRender.Restart();
-
             Debug.Assert(writeableBitmap != null);
+
+            swUpdateRender.Restart();                 
+
             writeableBitmap.Lock();
-            writeableBitmap.WritePixels(wbDirtyRect, imageData, 3 * 300 * RATIO, 0);
+            var pBuffer = Unsafe.AsPointer(ref buffer);
+            writeableBitmap.WritePixels(wbDirtyRect, new IntPtr(pBuffer), sizeof(ImageData), 3 * 300 * RATIO);
             writeableBitmap.AddDirtyRect(wbDirtyRect);
             writeableBitmap.Unlock();
 
