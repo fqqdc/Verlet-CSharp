@@ -6,6 +6,7 @@ using System.Diagnostics.Eventing.Reader;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics;
 using System.Threading.Tasks;
 
 namespace Verlet_CSharp.Physics
@@ -35,17 +36,23 @@ namespace Verlet_CSharp.Physics
             grid.Clear();
         }
 
+        const double Object_E = 0.9;
+        const float Wall_E = 0.5f;
+
         // Checks if two atoms are colliding and if so create a new contact
         private void SolveContact(ref PhysicObject obj_1, ref PhysicObject obj_2)
         {
             const float response_coef = 1.0f;
             const float eps = 0.0001f;
             Vector2 o2_o1 = obj_1.Position - obj_2.Position;
-            float dist2 = o2_o1.X * o2_o1.X + o2_o1.Y * o2_o1.Y;
+            float dist2 = o2_o1.LengthSquared();
             if (dist2 < 1.0f && dist2 > eps)
             {
-                var v1 = obj_1.Velocity;
-                var v2 = obj_2.Velocity;                
+                var p1 = Vector128.Create(obj_1.Position.X, obj_1.Position.Y);
+                var p2 = Vector128.Create(obj_2.Position.X, obj_2.Position.Y);
+
+                var v1 = Vector128.Create(obj_1.Velocity.X, obj_1.Velocity.Y);
+                var v2 = Vector128.Create(obj_2.Velocity.X, obj_2.Velocity.Y);
 
                 float dist = MathF.Sqrt(dist2);
                 // Radius are all equal to 1.0f
@@ -54,26 +61,37 @@ namespace Verlet_CSharp.Physics
                 obj_1.Position += col_vec;
                 obj_2.Position -= col_vec;
 
-                var v12 = obj_2.Position - obj_1.Position;
-                var v12LengthSquared = v12.LengthSquared();
-                var vC = 1 / v12LengthSquared * v12;
+                var v12f = obj_2.Position - obj_1.Position;
+                var v12 = Vector128.Create(v12f.X, v12f.Y);
+                var v12Length2 = v12[0] * v12[0] + v12[1] * v12[1];
+                var vC = 1 / v12Length2 * v12;
 
-                var v1a = Vector2.Dot(v1, v12) * vC;
-                var v2a = Vector2.Dot(v2, v12) * vC;
+                var v1a = Vector128.Dot(v1, v12) * vC;
+                var v2a = Vector128.Dot(v2, v12) * vC;
 
-                if (Vector2.Dot(v1a, v2a) > 0)
+                var v12_p = (p2 + v2a) - (p1 + v1a);
+
+                var dLen2 = v12_p[0] * v12_p[0] + v12_p[1] * v12_p[1] - v12Length2;
+                if (dLen2 < 0)
                 {
                     var v1b = v1 - v1a;
                     var v2b = v2 - v2a;
 
-                    const float DECAY = 1f;
-                    var v1new = v1b + v2a * DECAY;
-                    Debug.Assert(float.IsFinite(v1new.X) && float.IsFinite(v1new.Y));
-                    var v2new = v2b + v1a * DECAY;
-                    Debug.Assert(float.IsFinite(v2new.X) && float.IsFinite(v2new.Y));
+                    var v1new = v1b + v2a * Object_E;
+                    //var v1a_new = ((1 - Object_E) * v1a + (1 + Object_E) * v2a) * 0.5;
+                    //var v1new = v1a_new + v1b;
+                    Debug.Assert(double.IsFinite(v1new[0]) && double.IsFinite(v1new[1]));
 
-                    obj_1.SetVelocity(v1new);
-                    obj_2.SetVelocity(v2new);
+                    var v2new = v2b + v1a * Object_E;
+                    //var v2a_new = ((1 - Object_E) * v2a + (1 + Object_E) * v1a) * 0.5;
+                    //var v2new = v2a_new + v2b;
+                    Debug.Assert(double.IsFinite(v2new[0]) && double.IsFinite(v2new[1]));
+                    Debug.Assert(Vector128.Sum(v1 + v2 - v1new - v2new) < 0.1);
+                    Debug.Assert(Vector128.Sum((v1 * v1 + v2 * v2 - v1new * v1new - v2new * v2new) * 0.5f) < 0.1);
+
+
+                    obj_1.SetVelocity(new((float)v1new[0], (float)v1new[1]));
+                    obj_2.SetVelocity(new((float)v2new[0], (float)v2new[1]));
                 }
             }
         }
@@ -152,6 +170,8 @@ namespace Verlet_CSharp.Physics
         // Add a new object to the solver
         public int AddObject(PhysicObject obj)
         {
+            // Add gravity
+            obj.Acceleration += gravity;
             objects.Add(obj);
             return objects.Count - 1;
         }
@@ -195,11 +215,7 @@ namespace Verlet_CSharp.Physics
             for (int j = 0; j < arrObject.Length; j++)
             {
                 ref PhysicObject obj = ref arrObject[j];
-                if (obj.Position.X > 1.0f && obj.Position.X < worldSize.X - 1.0f &&
-                    obj.Position.Y > 1.0f && obj.Position.Y < worldSize.Y - 1.0f)
-                {
-                    grid.AddAtom((int)obj.Position.X, (int)obj.Position.Y, i);
-                }
+                grid.AddAtom((int)obj.Position.X, (int)obj.Position.Y, i);
                 ++i;
             }
         }
@@ -215,44 +231,53 @@ namespace Verlet_CSharp.Physics
             {
                 for (int i = range.Item1; i < range.Item2; ++i)
                 {
-                    const float Wall_E = 1f;
-
                     ref PhysicObject obj = ref this[i];
-                    // Add gravity
-                    obj.Acceleration += gravity;
+
                     // Apply Verlet integration
                     obj.Update(dt);
                     // Apply map borders collisions
-                    const float margin = 2.0f;
+                    const float margin = 2f;
 
                     var vel = obj.Velocity;
                     if (obj.Position.X > worldSize.X - margin)
                     {
                         obj.Position.X = worldSize.X - margin;
 
-                        vel.X *= -Wall_E;
-                        obj.SetVelocity(vel);
+                        if (vel.X > 0)
+                        {
+                            vel.X *= -Wall_E;
+                            obj.SetVelocity(vel);
+                        }
                     }
                     else if (obj.Position.X < margin)
                     {
                         obj.Position.X = margin;
 
-                        vel.X *= -Wall_E;
-                        obj.SetVelocity(vel);
+                        if (vel.X < 0)
+                        {
+                            vel.X *= -Wall_E;
+                            obj.SetVelocity(vel);
+                        }
                     }
                     if (obj.Position.Y > worldSize.Y - margin)
                     {
                         obj.Position.Y = worldSize.Y - margin;
 
-                        vel.Y *= -Wall_E;
-                        obj.SetVelocity(vel);
+                        if (vel.Y > 0)
+                        {
+                            vel.Y *= -Wall_E;
+                            obj.SetVelocity(vel);
+                        }
                     }
                     else if (obj.Position.Y < margin)
                     {
                         obj.Position.Y = margin;
 
-                        vel.Y *= -Wall_E;
-                        obj.SetVelocity(vel);
+                        if (vel.Y < 0)
+                        {
+                            vel.Y *= -Wall_E;
+                            obj.SetVelocity(vel);
+                        }
                     }
                 }
             });
