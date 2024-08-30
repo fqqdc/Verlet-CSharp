@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Diagnostics.Eventing.Reader;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -42,12 +44,37 @@ namespace Verlet_CSharp.Physics
             float dist2 = o2_o1.X * o2_o1.X + o2_o1.Y * o2_o1.Y;
             if (dist2 < 1.0f && dist2 > eps)
             {
+                var v1 = obj_1.Velocity;
+                var v2 = obj_2.Velocity;                
+
                 float dist = MathF.Sqrt(dist2);
                 // Radius are all equal to 1.0f
                 float delta = response_coef * 0.5f * (1.0f - dist);
                 Vector2 col_vec = (o2_o1 / dist) * delta;
                 obj_1.Position += col_vec;
                 obj_2.Position -= col_vec;
+
+                var v12 = obj_2.Position - obj_1.Position;
+                var v12LengthSquared = v12.LengthSquared();
+                var vC = 1 / v12LengthSquared * v12;
+
+                var v1a = Vector2.Dot(v1, v12) * vC;
+                var v2a = Vector2.Dot(v2, v12) * vC;
+
+                if (Vector2.Dot(v1a, v2a) > 0)
+                {
+                    var v1b = v1 - v1a;
+                    var v2b = v2 - v2a;
+
+                    const float DECAY = 1f;
+                    var v1new = v1b + v2a * DECAY;
+                    Debug.Assert(float.IsFinite(v1new.X) && float.IsFinite(v1new.Y));
+                    var v2new = v2b + v1a * DECAY;
+                    Debug.Assert(float.IsFinite(v2new.X) && float.IsFinite(v2new.Y));
+
+                    obj_1.SetVelocity(v1new);
+                    obj_2.SetVelocity(v2new);
+                }
             }
         }
 
@@ -188,6 +215,8 @@ namespace Verlet_CSharp.Physics
             {
                 for (int i = range.Item1; i < range.Item2; ++i)
                 {
+                    const float Wall_E = 1f;
+
                     ref PhysicObject obj = ref this[i];
                     // Add gravity
                     obj.Acceleration += gravity;
@@ -201,28 +230,28 @@ namespace Verlet_CSharp.Physics
                     {
                         obj.Position.X = worldSize.X - margin;
 
-                        vel.X *= -1;
+                        vel.X *= -Wall_E;
                         obj.SetVelocity(vel);
                     }
                     else if (obj.Position.X < margin)
                     {
                         obj.Position.X = margin;
 
-                        vel.X *= -1;
+                        vel.X *= -Wall_E;
                         obj.SetVelocity(vel);
                     }
                     if (obj.Position.Y > worldSize.Y - margin)
                     {
                         obj.Position.Y = worldSize.Y - margin;
 
-                        vel.Y *= -1;
+                        vel.Y *= -Wall_E;
                         obj.SetVelocity(vel);
                     }
                     else if (obj.Position.Y < margin)
                     {
                         obj.Position.Y = margin;
 
-                        vel.Y *= -1;
+                        vel.Y *= -Wall_E;
                         obj.SetVelocity(vel);
                     }
                 }

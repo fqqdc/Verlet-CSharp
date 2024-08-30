@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace Verlet_CSharp.Physics
 {
@@ -17,6 +18,7 @@ namespace Verlet_CSharp.Physics
     public struct CollisionCell
     {
         internal const int CellCapacity = 4;
+        static int MaxCellCapacity = 0;
 
         public SubCells Objects;
 
@@ -27,6 +29,18 @@ namespace Verlet_CSharp.Physics
             Objects[ObjectsCount] = id;
             if (ObjectsCount < CellCapacity - 1)
                 ObjectsCount += 1;
+
+            LogMaxCellCapacity(ObjectsCount);
+        }
+
+        [Conditional("DEBUG")]
+        private void LogMaxCellCapacity(int objectsCount)
+        {
+            if (objectsCount > MaxCellCapacity)
+            {
+                MaxCellCapacity = objectsCount;
+                Debug.WriteLine($"MaxCellCapacity:{MaxCellCapacity}");
+            }
         }
 
         public void Clear()
