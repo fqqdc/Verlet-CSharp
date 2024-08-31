@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace Verlet_CSharp.Engine.Common
@@ -48,11 +47,7 @@ namespace Verlet_CSharp.Engine.Common
 
                     //setPixel(p_x, (int)(y_c + y));
                     //setPixel(p_x, (int)(y_c - y));
-                    int index = XY2Index(p_x, (int)(y_c + y));
-                    Debug.Assert(index >= 0 && index < data.Length);
-                    data[index] = color;
-                    index = XY2Index(p_x, (int)(y_c - y));
-                    Debug.Assert(index >= 0 && index < data.Length);
+                    data[XY2Index(p_x, (int)(y_c + y))] = color;
                     data[XY2Index(p_x, (int)(y_c - y))] = color;
                 }
 
@@ -66,12 +61,8 @@ namespace Verlet_CSharp.Engine.Common
                         continue;
                     //setPixel(p_x, (int)(y_c + x));
                     //setPixel(p_x, (int)(y_c - x));
-                    int index = XY2Index(p_x, (int)(y_c + x));
-                    Debug.Assert(index >= 0 && index < data.Length);
-                    data[index] = color;
-                    index = XY2Index(p_x, (int)(y_c - x));
-                    Debug.Assert(index >= 0 && index < data.Length);
-                    data[index] = color;
+                    data[XY2Index(p_x, (int)(y_c + x))] = color;
+                    data[XY2Index(p_x, (int)(y_c - x))] = color;
                 }
             }
         }

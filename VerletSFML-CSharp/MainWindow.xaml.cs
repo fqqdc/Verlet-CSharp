@@ -65,19 +65,17 @@ namespace Verlet_CSharp
             if (ballNumber < 10)
                 ballNumber += dtUpdate * 0.5f;
 
-            if (solver.ObjectsCount < 90000)
+            if (solver.ObjectsCount < 9_0000)
             {
                 for (int i = (int)ballNumber; i > 0; i--)
                 {
-                    const float detT = 0.0001f;
-
                     var id = solver.CreateObject(new(2.0f, 10.0f + 1.1f * i));
                     solver[id].AddVelocity(Vector2.UnitX * 0.2f);
-                    solver[id].Color = ColorUtils.GetRainbow(id * detT);
+                    solver[id].Color = ColorUtils.GetRainbow(id * 0.0001f);
 
                     id = solver.CreateObject(new(298.0f, 10.0f + 1.1f * i));
                     solver[id].AddVelocity(Vector2.UnitX * -0.2f);
-                    solver[id].Color = ColorUtils.GetRainbow(id * detT + float.Pi * 0.5f);
+                    solver[id].Color = ColorUtils.GetRainbow(id * 0.0001f);
                 }
             }
             swUpdateSolver.Restart();
@@ -168,13 +166,6 @@ namespace Verlet_CSharp
                     span.FillCircle(300 * RATIO, obj.Position.X * RATIO, obj.Position.Y * RATIO, 0.5f * RATIO, obj.Color);
                 }
             });
-
-            //for (int i = 0; i < solver.ObjectsCount; i++)
-            //{
-            //    Span<Pixel24> span = buffer;
-            //    ref var obj = ref solver[i];
-            //    span.FillCircle(300 * RATIO, obj.Position.X * RATIO, obj.Position.Y * RATIO, 0.5f * RATIO, obj.Color);
-            //}
 
             swUpdateBitmap.Stop();
         }
