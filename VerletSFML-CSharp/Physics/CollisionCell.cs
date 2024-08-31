@@ -1,5 +1,4 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace Verlet_CSharp.Physics
@@ -18,11 +17,7 @@ namespace Verlet_CSharp.Physics
 
     public struct CollisionCell
     {
-        #if DEBUG
         internal const int CellCapacity = 4;
-        #else
-        internal const int CellCapacity = 4;
-        #endif
         static int MaxCellCapacity = 0;
 
         public SubCells Objects;
